@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caderneta</title>
+<style>
+  :root {
+    --paper: #faf6ec;
+    --paper-dark: #f0eadb;
+    --ink: #2b2b28;
+    --ink-soft: #6b6558;
+    --line: #c9c2ad;
+    --red: #b3341f;
+    --green: #2f6b3a;
+    --accent: #1f1e1c;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #dcd4bd;
+    color: var(--ink);
+    font-family: 'Courier New', 'SFMono-Regular', Consolas, Menlo, monospace;
+  }
+
+  body {
+    min-height: 100vh;
+    padding: 24px 12px 60px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .receipt {
+    width: 100%;
+    max-width: 760px;
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 1px, transparent 1px, transparent 3px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    padding: 28px 28px 0;
+    position: relative;
+  }
+
+  .receipt::after {
+    content: "";
+    display: block;
+    height: 18px;
+    margin: 0 -28px;
+    background:
+      linear-gradient(-45deg, var(--paper) 8px, transparent 0),
+      linear-gradient(45deg, var(--paper) 8px, transparent 0);
+    background-position: bottom left;
+    background-repeat: repeat-x;
+    background-size: 16px 18px;
+    filter: drop-shadow(0 4px 3px rgba(0,0,0,0.15));
+  }
+
+  header.receipt-head {
+    text-align: center;
+    padding-bottom: 16px;
+    border-bottom: 1px dashed var(--line);
+  }
+
+  header.receipt-head h1 {
+    margin: 0;
+    font-size: 1.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  header.receipt-head p {
+    margin: 6px 0 0;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+    padding: 20px 0;
+  }
+
+  @media (min-width: 720px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: start;
+    }
+  }
+
+  section {
+    min-width: 0;
+    padding-bottom: 4px;
+  }
+
+  h2 {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin: 0 0 12px;
+    color: var(--ink-soft);
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 0;
+  }
+
+  .toggle-group {
+    display: flex;
+    border: 1px solid var(--ink);
+    overflow: hidden;
+  }
+
+  .toggle-group button {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 4px;
+    background: transparent;
+    border: none;
+    font-family: inherit;
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+  }
+
+  .toggle-group button + button {
+    border-left: 1px solid var(--ink);
+  }
+
+  .toggle-group button.active[data-type="entrada"] {
+    background: var(--green);
+    color: var(--paper);
+  }
+
+  .toggle-group button.active[data-type="saida"] {
+    background: var(--red);
+    color: var(--paper);
+  }
+
+  input, select {
+    width: 100%;
+    min-width: 0;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 9px 10px;
+    background: var(--paper-dark);
+    border: 1px solid var(--line);
+    color: var(--ink);
+  }
+
+  input:focus, select:focus, button:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+
+  .row2 {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .btn-add {
+    margin-top: 4px;
+    padding: 10px;
+    background: var(--accent);
+    color: var(--paper);
+    border: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .btn-add:hover { opacity: 0.9; }
+
+  .month-filter {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    min-width: 0;
+  }
+
+  .month-filter label {
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .month-filter input {
+    flex: 1;
+  }
+
+  .entries {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 360px;
+    overflow-y: auto;
+  }
+
+  .entries li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 0;
+    border-bottom: 1px dashed var(--line);
+    font-size: 0.85rem;
+  }
+
+  .entries li .desc {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .entries li .desc .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .entries li .desc .meta {
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.03em;
+  }
+
+  .entries li .amount {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    min-width: 90px;
+  }
+
+  .entries li .amount.entrada { color: var(--green); }
+  .entries li .amount.saida { color: var(--red); }
+
+  .entries li .del {
+    background: none;
+    border: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    padding: 0 2px;
+    line-height: 1;
+  }
+
+  .entries li .del:hover { color: var(--red); }
+
+  .empty-state {
+    text-align: center;
+    padding: 30px 10px;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  .chart {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .bar-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 80px;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.75rem;
+  }
+
+  .bar-row .label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .bar-track {
+    background: var(--paper-dark);
+    border: 1px solid var(--line);
+    height: 16px;
+    position: relative;
+  }
+
+  .bar-fill {
+    height: 100%;
+    background: var(--red);
+    opacity: 0.75;
+  }
+
+  .bar-row .value {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  footer.totals {
+    border-top: 1px dashed var(--line);
+    padding: 16px 0 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.9rem;
+  }
+
+  .total-line {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .total-line .val {
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .total-line.saldo {
+    margin-top: 6px;
+    padding-top: 10px;
+    border-top: 1px solid var(--ink);
+    font-weight: bold;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .total-line.saldo .val.neg { color: var(--red); }
+  .total-line.saldo .val.pos { color: var(--green); }
+
+  .entradas .val { color: var(--green); }
+  .saidas .val { color: var(--red); }
+</style>
+</head>
+<body>
+<div class="receipt">
+  <header class="receipt-head">
+    <h1>Caderneta</h1>
+    <p id="subtitle">controle de gastos</p>
+  </header>
+
+  <div class="grid">
+    <section>
+      <h2>Novo lançamento</h2>
+      <form id="form">
+        <div class="toggle-group" id="typeToggle">
+          <button type="button" data-type="saida" class="active">Saída</button>
+          <button type="button" data-type="entrada">Entrada</button>
+        </div>
+        <input type="text" id="descricao" placeholder="Descrição" required maxlength="60">
+        <div class="row2">
+          <input type="number" id="valor" placeholder="Valor (R$)" step="0.01" min="0" required>
+          <input type="date" id="data" required>
+        </div>
+        <select id="categoria" required>
+          <option value="Mercado">Mercado</option>
+          <option value="Transporte">Transporte</option>
+          <option value="Moradia">Moradia</option>
+          <option value="Lazer">Lazer</option>
+          <option value="Saúde">Saúde</option>
+          <option value="Educação">Educação</option>
+          <option value="Salário">Salário</option>
+          <option value="Outros">Outros</option>
+        </select>
+        <button type="submit" class="btn-add">Adicionar</button>
+      </form>
+
+      <div style="margin-top: 24px;">
+        <h2>Saídas por categoria</h2>
+        <div class="chart" id="chart"></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Extrato</h2>
+      <div class="month-filter">
+        <label for="mes">Mês</label>
+        <input type="month" id="mes">
+      </div>
+      <ul class="entries" id="entries"></ul>
+    </section>
+  </div>
+
+  <footer class="totals">
+    <div class="total-line entradas">
+      <span>Entradas</span>
+      <span class="val" id="totalEntradas"></span>
+    </div>
+    <div class="total-line saidas">
+      <span>Saídas</span>
+      <span class="val" id="totalSaidas"></span>
+    </div>
+    <div class="total-line saldo">
+      <span>Saldo</span>
+      <span class="val" id="totalSaldo"></span>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'caderneta.lancamentos';
+  const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const el = {
+    form: document.getElementById('form'),
+    descricao: document.getElementById('descricao'),
+    valor: document.getElementById('valor'),
+    data: document.getElementById('data'),
+    categoria: document.getElementById('categoria'),
+    typeToggle: document.getElementById('typeToggle'),
+    mes: document.getElementById('mes'),
+    entries: document.getElementById('entries'),
+    chart: document.getElementById('chart'),
+    totalEntradas: document.getElementById('totalEntradas'),
+    totalSaidas: document.getElementById('totalSaidas'),
+    totalSaldo: document.getElementById('totalSaldo'),
+  };
+
+  let currentType = 'saida';
+
+  function loadEntries() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveEntries(entries) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));
+  }
+
+  let entries = loadEntries();
+
+  function todayISO() {
+    const d = new Date();
+    const tz = d.getTimezoneOffset() * 60000;
+    return new Date(d - tz).toISOString().slice(0, 10);
+  }
+
+  function currentMonth() {
+    return todayISO().slice(0, 7);
+  }
+
+  el.data.value = todayISO();
+  el.mes.value = currentMonth();
+
+  el.typeToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-type]');
+    if (!btn) return;
+    currentType = btn.dataset.type;
+    el.typeToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b === btn));
+  });
+
+  el.valor.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      el.form.requestSubmit();
+    }
+  });
+
+  el.form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const desc = el.descricao.value.trim();
+    const valorNum = parseFloat(el.valor.value);
+    const data = el.data.value;
+    const categoria = el.categoria.value;
+
+    if (!desc || isNaN(valorNum) || valorNum <= 0 || !data) return;
+
+    const centavos = Math.round(valorNum * 100);
+
+    entries.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
+      descricao: desc,
+      centavos,
+      data,
+      categoria,
+      tipo: currentType,
+    });
+
+    saveEntries(entries);
+
+    el.descricao.value = '';
+    el.valor.value = '';
+    el.data.value = todayISO();
+    el.descricao.focus();
+
+    render();
+  });
+
+  el.mes.addEventListener('change', render);
+
+  function deleteEntry(id) {
+    entries = entries.filter(e => e.id !== id);
+    saveEntries(entries);
+    render();
+  }
+
+  el.entries.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-del]');
+    if (!btn) return;
+    deleteEntry(btn.dataset.del);
+  });
+
+  function centsToBRL(cents) {
+    return fmt.format(cents / 100);
+  }
+
+  function filteredForMonth() {
+    const month = el.mes.value || currentMonth();
+    return entries.filter(e => e.data.slice(0, 7) === month);
+  }
+
+  function render() {
+    const monthEntries = filteredForMonth().sort((a, b) => b.data.localeCompare(a.data));
+
+    el.entries.innerHTML = '';
+
+    if (monthEntries.length === 0) {
+      el.entries.innerHTML = '<div class="empty-state">Nenhum lançamento este mês. Que tal adicionar o primeiro?</div>';
+    } else {
+      for (const entry of monthEntries) {
+        const li = document.createElement('li');
+        const dataFmt = entry.data.split('-').reverse().join('/');
+        li.innerHTML = `
+          <div class="desc">
+            <span class="name">${escapeHTML(entry.descricao)}</span>
+            <span class="meta">${dataFmt} · ${escapeHTML(entry.categoria)}</span>
+          </div>
+          <span class="amount ${entry.tipo}">${entry.tipo === 'saida' ? '-' : '+'}${centsToBRL(entry.centavos)}</span>
+          <button class="del" data-del="${entry.id}" title="Apagar" aria-label="Apagar lançamento">✕</button>
+        `;
+        el.entries.appendChild(li);
+      }
+    }
+
+    let totalEntradas = 0;
+    let totalSaidas = 0;
+    const porCategoria = {};
+
+    for (const entry of monthEntries) {
+      if (entry.tipo === 'entrada') {
+        totalEntradas += entry.centavos;
+      } else {
+        totalSaidas += entry.centavos;
+        porCategoria[entry.categoria] = (porCategoria[entry.categoria] || 0) + entry.centavos;
+      }
+    }
+
+    const saldo = totalEntradas - totalSaidas;
+
+    el.totalEntradas.textContent = centsToBRL(totalEntradas);
+    el.totalSaidas.textContent = centsToBRL(totalSaidas);
+    el.totalSaldo.textContent = centsToBRL(saldo);
+    el.totalSaldo.classList.toggle('neg', saldo < 0);
+    el.totalSaldo.classList.toggle('pos', saldo >= 0);
+
+    renderChart(porCategoria);
+  }
+
+  function renderChart(porCategoria) {
+    const rows = Object.entries(porCategoria).sort((a, b) => b[1] - a[1]);
+    el.chart.innerHTML = '';
+
+    if (rows.length === 0) {
+      el.chart.innerHTML = '<div class="empty-state">Sem saídas registradas neste mês.</div>';
+      return;
+    }
+
+    const max = rows[0][1];
+
+    for (const [categoria, cents] of rows) {
+      const pct = max > 0 ? (cents / max) * 100 : 0;
+      const row = document.createElement('div');
+      row.className = 'bar-row';
+      row.innerHTML = `
+        <span class="label">${escapeHTML(categoria)}</span>
+        <span class="bar-track"><span class="bar-fill" style="width:${pct}%"></span></span>
+        <span class="value">${centsToBRL(cents)}</span>
+      `;
+      el.chart.appendChild(row);
+    }
+  }
+
+  function escapeHTML(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
